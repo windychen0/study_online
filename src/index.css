@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,body,#app{
+    height: 100%;
+}
+
+.el-loading-spinner{
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: auto;
+}
+
+button:focus{
+    outline: none;
+}
+
+.transform-translate-y-0{
+    transform: translate3d(var(--tw-translate-x), 0, 0) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))
+}
