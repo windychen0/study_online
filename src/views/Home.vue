@@ -1,14 +1,17 @@
 <template>
   <div>
-    Home
+    <layout>
+
+    </layout>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import layout  from "../components/layout.vue"
 
 export default defineComponent({
-  components: {  },
+  components: { layout },
   setup () {
     return {  }
   }
