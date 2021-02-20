@@ -75,6 +75,35 @@
             </div>
 
             <div class="my-3" v-if="!form.lor">
+              <el-autocomplete
+                v-model="form.school"
+                :fetch-suggestions="querySearchAsync"
+                placeholder="学校"
+                @select="handleSelect"
+                class="w-full"
+              ></el-autocomplete>
+            </div>
+
+            <div class="my-3" v-if="!form.lor">
+              <el-autocomplete
+                v-model="form.college"
+                :fetch-suggestions="querySearchAsync2"
+                placeholder="院系"
+                @select="handleSelect"
+                class="w-full"
+              ></el-autocomplete>
+            </div>
+
+            <div class="my-3" v-if="!form.lor">
+              <input
+                type="number"
+                v-model="form.number"
+                :placeholder="form.show_num_place"
+                class="border rounded w-full py-2 px-4 outline-none focus:shadow-outline"
+              />
+            </div>
+
+            <!-- <div class="my-3" v-if="!form.lor">
               <input
                 id="school_input"
                 type="text"
@@ -82,7 +111,7 @@
                 placeholder="学校"
                 class="border rounded w-full py-2 px-4 outline-none focus:shadow-outline"
               />
-            </div>
+            </div> -->
 
             <div class="my-3 flex justify-between">
               <label class="cursor-pointer"
@@ -152,100 +181,211 @@
         </div>
       </div>
     </div>
-    
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, inject, nextTick, reactive, watch } from "vue";
 import { Role, Sex } from "../type";
+import md5 from "md5";
+import { useRouter } from "vue-router";
 
 let form = reactive({
-      account: "",
-      password: "",
-      lor: false,
-      role: "student",
-      loading: false,
-      password_again: "",
-      name: "",
-      sex: "男",
-      school: "",
-      schoolList: [{
-        name: "测试",
-        id: 1
-      },
-      {
-        name: "测试2",
-        id: 2
-      },
-      {
-        name: "测试3",
-        id: 3
-      }],
+  account: "",
+  password: "",
+  lor: true,
+  role: "student",
+  loading: false,
+  password_again: "",
+  name: "",
+  sex: "男",
+  school: "",
+  number: "",
+  show_num_place: "学号",
+  college: "",
 });
 
 export default defineComponent({
   components: {},
   setup() {
+    let router = useRouter();
     let api: any = inject("api");
     let storage: any = inject("storage");
-    function loginHandle() {
+    let message: any = inject("message");
+
+    let regs = {
+      password: /^(?![0-9]+$)(?![a-z]+$)(?![A-Z]+$)(?!([^(0-9a-zA-Z)])+$).{6,20}$/,
+    };
+
+    async function loginHandle() {
       if (!form.lor) {
         form.lor = true;
       } else {
+        if (check(true)) {
+          let data = await api.login({
+            username: form.account,
+            password: md5(form.password),
+            role: form.role
+          });
 
+          message.success("登录成功!");
+
+          storage.set("userInfo",{
+            username: form.account,
+            role: form.role
+          })
+
+          setTimeout(() => {
+            router.push({
+              path: "/home",
+            });
+          }, 300);
+        }
       }
     }
 
-    function registerHandle() {
+    async function registerHandle() {
       if (form.lor) {
         form.lor = false;
         form.role == "admin" && (form.role = "student");
       } else {
+        if (check(false)) {
+          let data = await api.register({
+            username: form.account,
+            password: md5(form.password),
+            role: form.role,
+            name: form.name,
+            sex: form.sex,
+            number: form.number,
+            schoolId: storage.get("school:" + form.school),
+            collegeId: storage.get("school:" + form.college),
+          });
+
+          message.success("注册成功!");
+
+          form.lor = true;
+        }
       }
     }
 
-    function keydown(e?: Event) {
-      
-    }
+    function keydown(e?: Event) {}
     // keydown();
 
     watch(
       () => form.lor,
-      (n, o, c) => {
-        
-      },
+      (n, o, c) => {},
       {
         deep: true,
       }
     );
 
     watch(
-      () => form.school,
-      async (n, o, c) => {
-        let res = await api.getSchool({name: n});
-        console.log(res)
-        res.data.forEach((element: { name: string;id: number }) => {
-          storage.set(element.name,element.id);
-        });
-        form.schoolList = res.data;
+      () => form.role,
+      (n: string, o, c) => {
+        let obj = {
+          student: "学号",
+          teacher: "教师工号",
+          assistant: "协助教师工号",
+        };
+
+        form.show_num_place = obj[n];
       },
       {
         deep: true,
       }
     );
 
-    return { form, api, Role, Sex, loginHandle, registerHandle };
+    const querySearchAsync = async (queryString: string, cb: any) => {
+      if (form.school == "") {
+        return;
+      }
+      let res = await api.getSchool({ name: queryString });
+
+      res.data.forEach((element: { name: string; id: number }) => {
+        storage.set("school:" + element.name, element.id);
+      });
+
+      cb(res.data.map((it) => ({ value: it.name, id: it.id })));
+    };
+
+    const querySearchAsync2 = async (queryString: string, cb: any) => {
+      if (form.college == "") {
+        return;
+      }
+      let res = await api.getCollege({ name: queryString });
+
+      res.data.forEach((element: { name: string; id: number }) => {
+        storage.set("college:" + element.name, element.id);
+      });
+
+      cb(res.data.map((it) => ({ value: it.name, id: it.id })));
+    };
+
+    const handleSelect = (item: any) => {
+      console.log(item);
+    };
+
+    function check(flag: boolean) {
+      if (form.account.trim() == "") {
+        message.warning("账号不能为空!");
+        return false;
+      }
+
+      if (!regs.password.test(form.password)) {
+        message.warning("请输入6-20位数字或字母,数字与字母至少1个");
+        return false;
+      }
+
+      if (!flag) {
+        if (form.password_again != form.password) {
+          message.warning("两次输入密码不一致,请重新输入");
+          return false;
+        }
+
+        if (form.name.trim() == "") {
+          message.warning("姓名不能为空");
+          return false;
+        }
+
+        if (!storage.get("school:" + form.school)) {
+          message.warning("请输入正确的学校");
+          return false;
+        }
+
+        if (!storage.get("college:" + form.college)) {
+          message.warning("请输入正确的院系");
+          return false;
+        }
+
+        if (form.number.trim() == "") {
+          message.warning(form.show_num_place + "不能为空");
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    console.log(md5("1233"));
+    return {
+      form,
+      api,
+      Role,
+      Sex,
+      loginHandle,
+      registerHandle,
+      querySearchAsync,
+      querySearchAsync2,
+      handleSelect,
+    };
   },
-  beforeUnmount(){
-    
-  },
+  beforeUnmount() {},
 });
 </script>
 
 <style scoped>
-  li.active{
-    background: skyblue;
-    color: white;
-  }
+li.active {
+  background: skyblue;
+  color: white;
+}
 </style>

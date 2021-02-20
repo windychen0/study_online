@@ -9,6 +9,7 @@ import { defineComponent, provide, readonly } from 'vue'
 import { useRouter } from 'vue-router'
 import api from "./request";
 import storage from './store';
+import { ElMessage } from 'element-plus';
 
 export default defineComponent({
   setup () {
@@ -16,6 +17,7 @@ export default defineComponent({
 
     provide("api",readonly(api));
     provide("storage",storage);
+    provide("message",ElMessage);
     
     return {}
   },

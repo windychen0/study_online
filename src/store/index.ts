@@ -7,8 +7,9 @@ const store: any = reactive({
 export default {
   set(key = "",value: any){
     store[key] = value;
+    localStorage.setItem(key,JSON.stringify(value));
   },
   get(key = ""){
-    return store[key];
+    return store[key] || (localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)) : null);
   }
 }

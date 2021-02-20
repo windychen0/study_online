@@ -50,6 +50,7 @@ interface Pages {
     pageNumber?: number;
     pageSize?: number;
     name?: "";
+    [props: string]: any;
 }
 
 export default {
@@ -74,6 +75,26 @@ export default {
     getSchool(data: Pages){
         return request({
             url: "/school/list",
+            data: {
+                pageNumber: data.pageNumber || 1,
+                pageSize: data.pageSize || 20,
+                name: data.name || ''
+            },
+        })
+    },
+    getCollege(data: Pages){
+        return request({
+            url: "/college/list",
+            data: {
+                pageNumber: data.pageNumber || 1,
+                pageSize: data.pageSize || 20,
+                name: data.name || ''
+            },
+        })
+    },
+    searchCourse(data: Pages){
+        return request({
+            url: "/course/list",
             data: {
                 pageNumber: data.pageNumber || 1,
                 pageSize: data.pageSize || 20,

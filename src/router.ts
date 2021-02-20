@@ -22,6 +22,11 @@ export const router = createRouter({
       path: '/play',
       name: "Play",
       component: () => import('./views/Play.vue')
+    },
+    {
+      path: '/search',
+      name: "Search",
+      component: () => import('./views/Search_res.vue')
     }
   ]
 })
